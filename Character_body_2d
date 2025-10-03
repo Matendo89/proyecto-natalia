@@ -1,0 +1,52 @@
+
+extends CharacterBody2D
+
+# --- Variables de Movimiento ---
+
+# Velocidad normal del personaje
+@export var speed = 130.0
+# Velocidad al correr (sprint)
+@export var sprint_speed = 220.0
+# Fuerza del salto
+@export var jump_velocity = -300.0
+# Multiplicador de la fricción para frenar más rápido
+@export var friction = 0.1
+# Multiplicador de la aceleración para un movimiento más suave
+@export var acceleration = 0.25
+
+# Obtiene la gravedad desde la configuración del proyecto para que todos los nodos la compartan.
+# Puedes ajustar este valor en Proyecto -> Configuración del proyecto -> Físicas -> 2d
+var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
+
+func _physics_process(delta):
+	# Añade la fuerza de la gravedad al personaje.
+	if not is_on_floor():
+		velocity.y += gravity * delta
+
+	# --- Manejo del Salto ---
+	# Permite saltar solo si el personaje está en el suelo.
+	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+		velocity.y = jump_velocity
+
+	# --- Manejo del Sprint ---
+	var current_speed = speed
+	# Comprueba si la tecla "sprint" (Shift Izquierdo) está siendo presionada.
+	if Input.is_action_pressed("Sprint"):
+		current_speed = sprint_speed
+	else:
+		current_speed = speed
+
+	# --- Manejo del Movimiento Horizontal (Izquierda/Derecha) ---
+	# Obtiene la dirección del input (-1 para izquierda, 1 para derecha, 0 si no hay input).
+	var direction = Input.get_axis("ui_left", "ui_right")
+
+	# Aplica el movimiento.
+	if direction:
+		# Lerp (interpolación lineal) para una aceleración suave.
+		velocity.x = lerp(velocity.x, direction * current_speed, acceleration)
+	else:
+		# Lerp para una deceleración (fricción) suave.
+		velocity.x = lerp(velocity.x, 0.0, friction)
+
+	# Llama a la función principal que mueve al personaje.
+	move_and_slide()
